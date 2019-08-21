@@ -1,0 +1,7 @@
+let g:netrw_dirhistmax  =10
+let g:netrw_dirhistcnt =5
+let g:netrw_dirhist_5='/home/toms/.config/terminator'
+let g:netrw_dirhist_4='/etc/X11/xorg.conf.d'
+let g:netrw_dirhist_3='/etc/initcpio/hooks'
+let g:netrw_dirhist_2='/home/toms/.config/sway'
+let g:netrw_dirhist_1='/home/toms/Documents/git/timetables/ResearchHRMS'
