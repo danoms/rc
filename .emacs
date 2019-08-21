@@ -5,9 +5,11 @@
 ;; You may delete these explanatory comments.
 (require 'package)
 
+(setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
+
 (add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/") t)
-(add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/"))
-(add-to-list 'package-archives '("melpa-stable" . "http://stable.melpa.org/packages/"))
+(add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/") t)
+(add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t)
 ;; (add-to-list 'load-path "~/.emacs.d/org/")
 
 (package-initialize)
@@ -54,12 +56,10 @@
  '(jdee-db-requested-breakpoint-face-colors (cons "#10151C" "#8BD49C"))
  '(jdee-db-spec-breakpoint-face-colors (cons "#10151C" "#384551"))
  '(magit-diff-use-overlays nil)
- '(org-agenda-files
-   (quote
-    ("~/org/projects.org" "~/org/work.org" "~/org/books.org" "~/org/gtd.org" "~/org/journal.org" "~/org/school.org" "~/org/home.org" "~/org/reverse_engineering.org")))
+ '(org-agenda-files (quote ("~/org/work.org")))
  '(package-selected-packages
    (quote
-    (julia-mode yaml-mode emr ensime anaconda-mode grandshell-theme dts-mode scala-mode helm-gtags org-bookmark-heading company-auctex irony-eldoc company-irony company-irony-c-headers auctex flycheck-irony helm-ag spacemacs-theme plantuml-mode function-args htmlize fold-dwim avy winner-mode w3m pdf-tools evil-org doom-themes evil-collection cyberpunk-theme vue-mode company-jedi fill-column-indicator helm-projectile jedi imenu-list json-mode subatomic-theme leuven-theme material-theme noctilux-theme monokai-theme solarized-theme zenburn-theme dracula-theme company-tern xref-js2 js2-refactor ac-js2 ob-async babel markdown-preview-eww py-autopep8 flycheck dashboard lua-mode elpy ledger-mode projectile ein evil-numbers yasnippet-snippets yasnippet c-eldoc cmake-mode helm company-c-headers company markdown-mode evil-magit magit ##)))
+    (julia-mode yaml-mode emr ensime anaconda-mode grandshell-theme dts-mode scala-mode helm-gtags org-bookmark-heading company-auctex irony-eldoc company-irony company-irony-c-headers auctex flycheck-irony helm-ag plantuml-mode function-args htmlize fold-dwim avy winner-mode w3m pdf-tools evil-org doom-themes evil-collection cyberpunk-theme vue-mode company-jedi fill-column-indicator helm-projectile jedi imenu-list json-mode subatomic-theme leuven-theme material-theme noctilux-theme monokai-theme solarized-theme zenburn-theme dracula-theme company-tern ac-js2 ob-async babel markdown-preview-eww py-autopep8 flycheck dashboard lua-mode elpy ledger-mode projectile ein evil-numbers yasnippet-snippets yasnippet c-eldoc cmake-mode helm company-c-headers company markdown-mode evil-magit magit ##)))
  '(plantuml-jar-path "/home/toms/org/scripts/plantuml.jar")
  '(pos-tip-background-color "#FFFACE")
  '(pos-tip-foreground-color "#272822")
@@ -197,6 +197,10 @@
  ;; If there is more than one, they won't work right.
  )
 
+;; THEMES
+;(use-package spacemacs-theme
+;  :ensure t)
+
 ;; PACKAGES
 
 (use-package use-package-ensure-system-package
@@ -205,7 +209,10 @@
 (use-package json-mode
   :mode "\\.json\\'")
 
-(require 'flycheck)
+(use-package flycheck
+  :ensure t
+  :init (global-flycheck-mode))
+
 (defun my-parse-jslinter-warning (warning)
   (flycheck-error-new
    :line (1+ (cdr (assoc 'line warning)))
@@ -225,12 +232,8 @@ See URL `https://github.com/tensor5/JSLinter'."
   :error-parser jslinter-error-parser
   :modes (js-mode js2-mode js3-mode))
 
-(use-package flycheck-irony
-  :after flycheck
-  :init
-  (add-hook 'flycheck-mode-hook #'flycheck-irony-setup))
-
 (use-package flycheck
+  :ensure t
   :config
   ;; C
   (global-flycheck-mode))
@@ -239,6 +242,14 @@ See URL `https://github.com/tensor5/JSLinter'."
 	  (lambda () (setq flycheck-gcc-include-path
 			   (list ".."))))
 ;; (setq flycheck-gcc-include-path (list ".."))
+
+(use-package flycheck-irony
+  :after (flychec irony)
+  :init
+  (add-hook 'flycheck-mode-hook #'flycheck-irony-setup))
+
+(use-package undo-tree
+  :ensure t)
 
 ;; EVIL MODE and evil stuff
 (use-package evil
@@ -342,6 +353,7 @@ See URL `https://github.com/tensor5/JSLinter'."
 
 (use-package company-irony
   :ensure t
+  :after (irony company-irony-c-headers)
   :config
   (add-to-list 'company-backends 'company-irony))
 
@@ -363,11 +375,13 @@ See URL `https://github.com/tensor5/JSLinter'."
 
 (use-package irony-eldoc
   :ensure t
+  :after irony
   :config
   (add-hook 'irony-mode-hook #'irony-eldoc))
 
 (use-package company-jedi
   :ensure t
+  :after (company undo-tree)
   :config
   (add-hook 'python-mode-hook 'jedi:setup)
   (add-to-list 'company-backends 'company-jedi))
@@ -433,7 +447,7 @@ See URL `https://github.com/tensor5/JSLinter'."
 
   (setq org-log-done 'time)
   (defun my-org-confirm-babel-evaluate (lang body)
-    (not (member lang '("C" "sh" "python" "octave" "plantuml"))))
+    (not (member lang '("C" "shell" "python" "octave" "plantuml"))))
 
   (setq org-confirm-babel-evaluate 'my-org-confirm-babel-evaluate)
 
@@ -441,7 +455,7 @@ See URL `https://github.com/tensor5/JSLinter'."
    'org-babel-load-languages
    '((C . t)
      (octave t)
-     (sh . t)
+     (shell . t)
      (python . t)
      (plantuml . t)
      (emacs-lisp . t)))
@@ -457,13 +471,13 @@ See URL `https://github.com/tensor5/JSLinter'."
   ;; other
   (setq org-src-fontify-natively t)
   
-  (setq org-agenda-files (list "~/org/work.org"
-			       "~/org/books.org"
-			       "~/org/gtd.org"
-			       "~/org/journal.org"
-			       "~/org/school.org"
-			       "~/org/home.org"
-			       "~/org/reverse_engineering.org"))
+;  (setq org-agenda-files (list "~/org/work.org"
+;			       "~/org/books.org"
+;			       "~/org/gtd.org"
+;			       "~/org/journal.org"
+;			       "~/org/school.org"
+;			       "~/org/home.org"
+;			       "~/org/reverse_engineering.org"))
 
   (setq org-agenda-include-diary t)
   (setq org-default-notes-file (concat org-directory "/notes.org"))
@@ -507,7 +521,11 @@ See URL `https://github.com/tensor5/JSLinter'."
 (use-package markdown-mode
   :defer t)
 
+(use-package helm-projectile
+			 :ensure t)
+
 (use-package projectile
+			 :after helm-projectile
   :config
   (define-key projectile-mode-map (kbd "M-p") 'projectile-command-map)
   (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
@@ -544,8 +562,13 @@ See URL `https://github.com/tensor5/JSLinter'."
 
 
 ;; (global-linum-mode nil)
+(use-package elpy
+  :ensure t
+  :after undo-tree
+  :init
+  (elpy-enable))
 
-(elpy-enable)
+;(elpy-enable)
 
 (setq markdown-command "/usr/bin/pandoc")
 
@@ -556,34 +579,31 @@ See URL `https://github.com/tensor5/JSLinter'."
 ;; (add-hook 'js2-mode-hook (lambda () (tern-mode t)))
 
 (add-hook 'js-mode-hook 'js2-minor-mode)
-;; (add-hook 'js2-mode-hook 'ac-js2-mode)
-;; (add-hook 'js2-mode-hook #'js2-imenu-extras-mode)
-;; (require 'js2-mode)
-;; (add-to-list 'auto-mode-alist '("\\.js\\'" . (js2-mode ac-js2-mode)))
 (use-package js2-mode
   :mode "\\.js\\'"
   :hook (ac-js2-mode
 	 js2-imenu-extras-mode
 	 js2-refactor-mode))
 
-(require 'js2-refactor)
-(require 'xref-js2)
-
-(add-hook 'js2-mode-hook (lambda ()
-			   (tern-mode)
-			   (company-mode)))
-
-;; (define-key tern-mode-keymap (kbd "M-.") nil)
-;; (define-key tern-mode-keymap (kbd "M-,") nil)
-
-;; (add-hook 'js2-mode-hook #'js2-refactor-mode)
-(js2r-add-keybindings-with-prefix "C-c C-r")
-;; (define-key js2-mode-map (kbd "C-k") #'js2r-kill)
-
-(define-key js-mode-map (kbd "M-.") nil)
-
-(add-hook 'js2-mode-hook (lambda ()
-			   (add-hook 'xref-backend-functions #'xref-js2-xref-backend nil t)))
+(use-package js2-refactor
+			 :hook ('js2-mode-hook #'js2-refactor-mode))
+(use-package xref-js2
+			 :ensure t
+			 :init
+			 (add-hook 'js2-mode-hook (lambda ()
+										   (add-hook 'xref-backend-functions #'xref-js2-xref-backend nil t))))
+;FIXME: js2 modes
+;(add-hook 'js2-mode-hook (lambda ()
+;			   (tern-mode)
+;			   (company-mode)))
+;
+;
+;(js2r-add-keybindings-with-prefix "C-c C-r")
+;
+;(define-key js-mode-map (kbd "M-.") nil)
+;
+;(add-hook 'js2-mode-hook (lambda ()
+;			   (add-hook 'xref-backend-functions #'xref-js2-xref-backend nil t)))
 
 
 ;; (add-hook 'js-mode-hook (lambda () (tern-mode t)))
@@ -612,18 +632,23 @@ See URL `https://github.com/tensor5/JSLinter'."
        (get-buffer-process (current-buffer))
        nil "_"))))
 
+(use-package scala-mode
+			 :interpreter
+			 ("scala" . scala-mode))
+
 (use-package ensime
   :ensure t
+  :after scala-mode
   :bind
   (("C-M-]" . 'ensime-edit-definition-of-thing-at-point)
    ("C-M-[" . 'ensime-edit-definition-of-type-of-thing-at-point))
   :pin melpa-stable)
 
-(use-package jedi
-  :defer t
-  :after python
-  :init
-  (setq jedi:complete-on-dot t))
+;(use-package jedi
+;  :defer t
+;  :after python
+;  :init
+;  (setq jedi:complete-on-dot t))
 ;; (setq jedi:complete-on-dot t)
 
 ;; vue mode
@@ -639,6 +664,7 @@ See URL `https://github.com/tensor5/JSLinter'."
   )
 (add-to-list 'auto-mode-alist '("\\.pdf\\'" . pdf-view-mode))
 (use-package avy
+			 :ensure t
   :bind
   ("C-:" . 'avy-goto-char))
 
